@@ -10,7 +10,7 @@ Gem::Specification.new do |spec|
   spec.email         = ['zhiqiangzhan@gmail.com']
   spec.summary       = %q{A x86 assembler}
   spec.description   = %q{A x86 assembler implemented by Ruby.}
-  spec.homepage      = ''
+  spec.homepage      = 'https://github.com/jameszhan/rasm'
   spec.license       = 'MIT'
 
   spec.files         = `git ls-files -z`.split("\x0")
