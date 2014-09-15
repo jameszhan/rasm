@@ -1,0 +1,3 @@
+class OpCode
+
+end
