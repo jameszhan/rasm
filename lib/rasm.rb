@@ -1,5 +1,5 @@
 require 'rasm/version'
 
-module RASM
+module Rasm
   # Your code goes here...
 end
