@@ -1,4 +1,3 @@
-
 module Rasm
 
   class Ref
@@ -7,6 +6,19 @@ module Rasm
       @scope = scope
       @selector = selector
       @options = options
+    end
+
+    def bind(defs)
+      data.merge!(defs)
+      self
+    end
+
+    def [](key)
+      data[key]
+    end
+
+    def []=(key, value)
+      data[key] = value
     end
 
     def to_s
@@ -28,37 +40,24 @@ module Rasm
       end
     end
 
-    private
-      def find(scope, selector)
-        key = options[:key]
-        value = scope[selector]
-        if value
-          ref = key ? value[key] : value
-          if ref && ref.respond_to?(:val)
-            ref.val
-          else
-            ref
-          end
-        end
-      end
-  end
-
-
-  class RefHash < Hash
-
-    def ref(selector, options = {})
-      Ref.new(self, selector, options)
-    end
-
     def respond_to_missing?(method, *)
-      self.include?(method) || super
+      data.include?(method) || super
     end
 
     def method_missing(method, *args)
-      return self[method] if args.empty? && self.include?(method)
+      return data[method] if args.empty? && data.include?(method)
       super
     end
 
+    private
+      def data
+         @data ||= {}
+      end
+
+      def find(scope, selector)
+        value = scope[selector]
+        value && value.respond_to?(:val) ? value.val : value
+      end
   end
 
 end
