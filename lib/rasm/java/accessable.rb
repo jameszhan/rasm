@@ -37,7 +37,7 @@ module Rasm
         '['.to_sym => lambda{|type| "#{type}[]"}
       }
 
-      TYPEPATTERN = /^([ZBCSIFJDL\[])([^;]*);?$/
+      TYPEPATTERN = /^([ZBCSIFJDL\[])([^;<]*(<[^>]+>)?);?$/
 
       def typeof(decriptor)
         if m = TYPEPATTERN.match(decriptor)

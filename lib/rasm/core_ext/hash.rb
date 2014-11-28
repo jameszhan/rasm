@@ -5,7 +5,7 @@ class Hash
   end
 
   def respond_to_missing?(method, *)
-    self.include?(method) || super
+    self.key?(method) || super
   end
 
   def method_missing(method, *args)

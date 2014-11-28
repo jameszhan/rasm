@@ -56,7 +56,7 @@ module Rasm
 
       def find(scope, selector)
         value = scope[selector]
-        value && value.respond_to?(:val) ? value.val : value
+        value.respond_to?(:val) ? value.val : value
       end
   end
 

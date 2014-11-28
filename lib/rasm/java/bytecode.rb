@@ -1,6 +1,7 @@
 require 'rasm/java/constant_type'
 require 'rasm/java/structure'
 require 'rasm/java/accessable'
+require 'rasm/java/attributes'
 
 module Rasm
   module Java
@@ -35,7 +36,6 @@ module Rasm
           if magic == 0xCAFEBABE
             @version = io.read(4).unpack('nn').reverse.join('.')
             pull_cp_info(io)
-
             self.access_flags, this_class, super_class, interfaces_count = io.read(8).unpack('n*')
             @interfaces = interfaces_count > 0 ? io.read(2 * interfaces_count).unpack('n*').map{|item| constant_pool[item].val} : []
             self.name, @super_class = constant_pool[this_class].val, constant_pool[super_class].val
@@ -82,7 +82,12 @@ module Rasm
       def cp_info
         str = "cp_info (#{@constant_pool_count}) \n"
         constant_pool.each do|i, e|
-          str << "#%02d = %-16s %-20s %s\n" % [i, e.name, e, ("//#{e.val}" if e.is_a?(Ref))]
+          if e.is_a? Ref
+            str << "#%02d = %-16s %-20s %s\n" % [i, e.name, e, ("//#{e.val}" if e.is_a?(Ref))]
+          else
+            str << "#%02d = %-16s %-20s\n" % [i, e.name, e.val]
+          end
+
         end
         str
       end
@@ -90,13 +95,16 @@ module Rasm
       private
         def pull_cp_info(io)
           @constant_pool_count = io.read(2).unpack('n')[0]
-          no = 1
-          while no < @constant_pool_count
+          i = 1
+          while i < @constant_pool_count
             tag = io.read(1).unpack('C')[0]
             constant_type = CONSTANT_TYPES[tag]
-            constant_type.set(constant_pool, no, io) if constant_type
-            no += 1 if tag == 5 || tag == 6
-            no += 1
+            if constant_type
+              target = constant_type.value_at(io)
+              constant_pool[i] = target.respond_to?(:call) ? target.call(constant_pool) : target
+            end
+            i += 1 if tag == 5 || tag == 6
+            i += 1
           end
         end
 
@@ -120,7 +128,8 @@ module Rasm
           attributes = []
           attributes_count.times do
             attribute_name_index, attribute_length = io.read(6).unpack('nN')
-            attributes << {constant_pool[attribute_name_index].val => io.read(attribute_length)}
+            name = constant_pool[attribute_name_index].val
+            attributes << Attribute.of(constant_pool, name, io.read(attribute_length))
           end
           attributes
         end

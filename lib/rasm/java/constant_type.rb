@@ -1,64 +1,65 @@
 module Rasm
   module Java
 
-    ConstantInfo = Struct.new(:name, :tag, :val, :bytes) do
-      def to_s
-        val
+
+
+    ConstantType = Struct.new(:name, :tag, :rule) do
+
+      def value(val)
+        {tag: tag, name: name, val: val}
       end
+
+      def value_at(io)
+        rule.call(io)
+      end
+
+      class << self
+        def val(name, tag, len, flag)
+          ConstantType.new(name, tag, val_lambda(name, tag, len, flag))
+        end
+
+        def ref(name, tag, len)
+          ConstantType.new(name, tag, ref_lambda(name, tag, len))
+        end
+
+        private
+          def val_lambda(name, tag, len, flag)
+            lambda do|io|
+              length = len.respond_to?(:call) ? len.call(io) : len
+              bytes = io.read(length)
+              val = flag.respond_to?(:call) ? flag.call(bytes) : bytes.unpack(flag)[0]
+              {val: val, name: name, tag: tag}
+            end
+          end
+
+          def ref_lambda(name, tag, len)
+            lambda do|io|
+              selector = len == 2 ? io.read(len).unpack('n')[0] : io.read(len).unpack('nn')
+              lambda{|cp| cp.ref(selector).bind(name: name, tag: tag)}
+            end
+          end
+      end
+
     end
 
-    ConstantType = Struct.new(:name, :tag, :length) do
-      def read(io)
-        len = length
-        if length.respond_to? :call
-          len = length.call(io)
-        end
-        io.read(len)
-      end
-
-      def set(cp, key, io)
-        str = read(io)
-        val = case tag
-          when 1
-            str.unpack('a*')[0]
-          when 3
-            str.unpack('N')[0]
-          when 4
-            str.unpack('g')[0]
-          when 5
-            h, l = str.unpack('NN')
-            "#{(h << 32) + l}l"
-          when 6
-            "#{str.unpack('G')[0]}d"
-          when 7, 8
-            cp.ref(str.unpack('n')[0])
-          when 9, 10, 11
-            cp.ref(str.unpack('nn'))
-          when 12
-            cp.ref(str.unpack('nn'))
-          else
-            puts "Unsupported tag #{tag}"
-        end
-        cp[key] = val.is_a?(Rasm::Ref) ? val.bind(tag: tag, name: name) : ConstantInfo.new(name, tag, val)
-      end
-
-    end
 
     CONSTANT_TYPES = [
       nil,
-      ConstantType.new(:Utf8, 1, lambda{|io| io.read(2).unpack('n')[0]}),
+      ConstantType.val(:Utf8, 1, lambda{|io| io.read(2).unpack('n')[0]}, 'a*'),
       nil,
-      ConstantType.new(:Integer ,3, 4),
-      ConstantType.new(:Float, 4, 4),
-      ConstantType.new(:Long, 5, 8),
-      ConstantType.new(:Double, 6, 8),
-      ConstantType.new(:Class, 7, 2),
-      ConstantType.new(:String, 8, 2),
-      ConstantType.new(:Fieldref, 9, 4),
-      ConstantType.new(:Methodref, 10, 4),
-      ConstantType.new(:InterfaceMethodref, 11, 4),
-      ConstantType.new(:NameAndType, 12, 4)
+      ConstantType.val(:Integer ,3, 4, 'N'),
+      ConstantType.val(:Float, 4, 4, 'g'),
+      ConstantType.val(:Long, 5, 8, lambda{|bytes| h, l = bytes.unpack('NN'); (h << 32) + l}),
+      ConstantType.val(:Double, 6, 8, 'G'),
+      ConstantType.ref(:Class, 7, 2),
+      ConstantType.ref(:String, 8, 2),
+      ConstantType.ref(:Fieldref, 9, 4),
+      ConstantType.ref(:Methodref, 10, 4),
+      ConstantType.ref(:InterfaceMethodref, 11, 4),
+      ConstantType.ref(:NameAndType, 12, 4)
     ]
+
+
 
   end
 end
