@@ -1,5 +1,11 @@
 require 'rasm/version'
+require 'rasm/core_ext'
+
 
 module Rasm
-  # Your code goes here...
+  autoload :Ref, 'rasm/ref'
+
+  module Java
+    autoload :Bytecode, 'rasm/java/bytecode'
+  end
 end
