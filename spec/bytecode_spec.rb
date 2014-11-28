@@ -10,9 +10,8 @@ describe Rasm do
 
       bytecode = Rasm::Java::Bytecode.new class_file
       puts bytecode.version
-      puts bytecode.constant_pool_count
       puts bytecode.cp_info
-      puts bytecode.class_info
+      puts bytecode
       puts bytecode.fields
       puts bytecode.methods
       puts bytecode.attributes

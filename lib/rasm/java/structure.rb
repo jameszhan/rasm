@@ -1,21 +1,28 @@
+require 'rasm/java/accessable'
 module Rasm
   module Java
-    module ACC
-      def acc
 
+    class FieldInfo
+      include Accessable
+      attr_reader :descriptor, :attributes
+      def initialize(descriptor, attributes)
+        @descriptor, @attributes = descriptor, attributes
       end
-    end
 
-    ClassInfo = Struct.new(:access_flags, :this_class, :super_class, :interfaces) do
-      include ACC
-    end
+      def to_s
+        access = access_flags
+        str = ''
+        str << "\t// DEPRECATED\n" if access & ACC_DEPRECATED != 0
+        str << "\t// access flags 0x%x\n" % access
+        str << "\t#{access_desc} #{typeof(descriptor)} #{name}"
+        str << " = #{attributes}" unless attributes.empty?
+        str
+      end
 
-    FieldInfo = Struct.new(:access_flags, :name, :descriptor, :attributes) do
-      include ACC
     end
 
     MethodInfo = Struct.new(:access_flags, :name, :descriptor, :attributes) do
-      include ACC
+
     end
   end
 end
