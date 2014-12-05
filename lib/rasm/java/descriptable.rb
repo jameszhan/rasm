@@ -22,12 +22,12 @@ module Rasm
         @attributes ||= []
       end
 
-      def typeof(descriptor)
-        parse_type(StringScanner.new(descriptor), 0)
-      end
-
       def attribute_of(name)
         attributes.detect{|attr| attr.name == name}
+      end
+
+      def typeof(descriptor)
+        parse_type(StringScanner.new(descriptor), 0)
       end
 
       private
@@ -42,14 +42,13 @@ module Rasm
             when 'T'
               start = scanner.pos
               scanner.scan_until(/;/)
-              str << scanner.string[start...scanner.pos - 1]
+              str << scanner.string[start...scanner.pos - 2]
             else # when 'L'
               visited = false
               scanner.scan(/L/)
               start = scanner.pos
               begin
                 ch = scanner.getch
-                #puts "ch = #{ch} peek = #{s.peek(1000)}"
                 case ch
                   when ';'
                     str << scanner.string[start...scanner.pos - 1] unless visited
@@ -71,6 +70,7 @@ module Rasm
                         when '*'
                           ret << '?'
                         else
+                          scanner.unscan
                           ret << parse_type(scanner, level + 1)
                       end
                     end until scanner.eos?

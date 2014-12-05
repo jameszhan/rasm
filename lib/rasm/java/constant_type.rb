@@ -57,7 +57,5 @@ module Rasm
       ConstantType.ref(:NameAndType, 12, 4)
     ]
 
-
-
   end
 end

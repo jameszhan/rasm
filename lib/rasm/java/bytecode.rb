@@ -1,6 +1,6 @@
 require 'rasm/java/constant_type'
 require 'rasm/java/accessable'
-require 'rasm/java/descriptor'
+require 'rasm/java/descriptable'
 require 'rasm/java/attribute'
 require 'rasm/java/class_node'
 require 'rasm/java/field_node'
@@ -29,28 +29,28 @@ module Rasm
     # }
     #
     class Bytecode
-      include Accessable
 
       class << self
-        def of(class_file)
-          self.new.read(class_file)
+        def of(class_file, options = {})
+          self.new.read(class_file, options)
         end
       end
 
-      def read(class_file)
+      def read(class_file, options={})
         class_node = ClassNode.new
         open class_file, 'rb' do|io|
           magic = io.read(4).unpack('N')[0]
           if magic == 0xCAFEBABE
             class_node.version = io.read(4).unpack('nn').reverse.join('.')
-            pull_cp_info(io)
-            class_node.access_flags, this_class, super_class, interfaces_count = io.read(8).unpack('n*')
-            class_node.interfaces = interfaces_count > 0 ? io.read(2 * interfaces_count).unpack('n*').map{|item| constant_pool[item].val} : []
-            class_node.name, class_node.super_name = constant_pool[this_class].val, constant_pool[super_class].val
+            pull_cp_info(io, options[:verbose])
+
+            access_flags, this_class, super_class, interfaces_count = io.read(8).unpack('n*')
+            interfaces = interfaces_count > 0 ? io.read(2 * interfaces_count).unpack('n*').map{|item| constant_pool[item].val} : []
+            class_node.access_flags, class_node.name, class_node.super_name, class_node.interfaces = access_flags, constant_pool[this_class].val, constant_pool[super_class].val, interfaces
 
             class_node.field_nodes.concat pull_list(io, FieldNode)
             class_node.method_nodes.concat pull_list(io, MethodNode)
-            class_node.attributes.concat pull_attributes(io)
+            class_node.attributes = pull_attributes(io)
           else
             raise "magic #{magic} is not valid java class file."
           end
@@ -58,51 +58,12 @@ module Rasm
         class_node
       end
 
-      def to_s
-        access = access_flags
-        str = ''
-        if access & ACC_DEPRECATED != 0
-          str << "//DEPRECATED\n"
-        end
-        str << "// access flags 0x%x\n" % access
-        str << access_desc
-        if (access & ACC_ANNOTATION) != 0
-          str << '@interface '
-        elsif (access & ACC_INTERFACE) != 0
-          str << 'interface ';
-        elsif (access & ACC_ENUM) == 0
-          str << 'class '
-        end
-        str << name
-        str << " extends #{super_class} " if super_class && super_class != 'java/lang/Object'
-        str << " implements %s {\n" % interfaces.join(',') unless interfaces.empty?
-        fields.each do|f|
-          str << "#{f}\n"
-        end
-        str << "\n}"
-        str
-      end
-
-
       def constant_pool
         @constant_pool ||= {}
       end
 
-      def cp_info
-        str = "cp_info (#{@constant_pool_count}) \n"
-        constant_pool.each do|i, e|
-          if e.is_a? Ref
-            str << "#%02d = %-16s %-20s %s\n" % [i, e.name, e, ("//#{e.val}" if e.is_a?(Ref))]
-          else
-            str << "#%02d = %-16s %-20s\n" % [i, e.name, e.val]
-          end
-
-        end
-        str
-      end
-
       private
-        def pull_cp_info(io)
+        def pull_cp_info(io, verbose)
           @constant_pool_count = io.read(2).unpack('n')[0]
           i = 1
           while i < @constant_pool_count
@@ -114,6 +75,17 @@ module Rasm
             end
             i += 1 if tag == 5 || tag == 6
             i += 1
+          end
+          if verbose
+            str = "constant_pool (#{@constant_pool_count}) \n"
+            constant_pool.each do|j, e|
+              if e.is_a? Ref
+                str << "#%02d = %-16s %-20s %s\n" % [j, e.name, e, ("//#{e.val}" if e.is_a?(Ref))]
+              else
+                str << "#%02d = %-16s %-20s\n" % [j, e.name, e.val]
+              end
+            end
+            puts str
           end
         end
 
@@ -138,12 +110,12 @@ module Rasm
           attributes_count.times do
             attribute_name_index, attribute_length = io.read(6).unpack('nN')
             name = constant_pool[attribute_name_index].val
+            puts "#{name} => #{attribute_length}"
             attributes << Attribute.of(constant_pool, name, io.read(attribute_length))
           end
           attributes
         end
     end
-
 
   end
 end

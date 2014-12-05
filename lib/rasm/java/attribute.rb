@@ -1,7 +1,7 @@
 module Rasm
   module Java
     class Attribute
-      attr_reader :name
+      attr_reader :name, :data
       def initialize(cp, name, data)
         @cp, @name, @data = cp, name, data
       end
@@ -12,13 +12,19 @@ module Rasm
 
       class << self
         def of(cp, name, data)
-          case name
-            when 'Code'
-
-            else
-              Attribute.new(cp, name, data)
+          type = begin
+            "Rasm::Java::#{name}Attribute".constantize
+          rescue
+            Attribute
           end
+          type.new(cp, name, data)
         end
+      end
+    end
+
+    class DeprecatedAttribute < Attribute
+      def value
+        true
       end
     end
   end

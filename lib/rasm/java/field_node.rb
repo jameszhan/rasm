@@ -8,7 +8,7 @@ module Rasm
         @name, @descriptor, @attributes = name, descriptor, attributes
       end
 
-      def to_s
+      def textify
         access = access_flags
         str = ''
         str << "\t// DEPRECATED\n" if access & ACC_DEPRECATED != 0
@@ -16,7 +16,7 @@ module Rasm
         signature, constant_value = attribute_of('Signature'), attribute_of('ConstantValue')
         if signature
           str << "\t// signature #{signature.value}\n"
-          str << "\t// declaration #{typeof(signature.value)}\n"
+          str << "\t// declaration #{typeof(signature.value).gsub('/', '.')}\n"
         else
           str << "\t// declaration #{typeof(descriptor)}\n"
         end
