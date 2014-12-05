@@ -8,13 +8,13 @@ describe Rasm do
 
       class_file = "#{root_dir}/#{clazz.gsub('.', '/')}.class"
 
-      bytecode = Rasm::Java::Bytecode.new class_file
-      puts bytecode.version
-      puts bytecode.cp_info
-      puts bytecode
-      puts bytecode.fields
-      puts bytecode.methods
-      puts bytecode.attributes
+      class_node = Rasm::Java::Bytecode.of class_file
+      puts class_node.version
+      # puts bytecode.cp_info
+      puts class_node
+      puts class_node.field_nodes
+      puts class_node.method_nodes
+      puts class_node.attributes
     end
   end
 

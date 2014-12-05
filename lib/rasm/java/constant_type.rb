@@ -1,8 +1,6 @@
 module Rasm
   module Java
 
-
-
     ConstantType = Struct.new(:name, :tag, :rule) do
 
       def value(val)

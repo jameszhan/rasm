@@ -1,7 +1,10 @@
 require 'rasm/java/constant_type'
-require 'rasm/java/structure'
 require 'rasm/java/accessable'
-require 'rasm/java/attributes'
+require 'rasm/java/descriptor'
+require 'rasm/java/attribute'
+require 'rasm/java/class_node'
+require 'rasm/java/field_node'
+require 'rasm/java/method_node'
 
 module Rasm
   module Java
@@ -28,25 +31,31 @@ module Rasm
     class Bytecode
       include Accessable
 
-      attr_reader :version, :super_class, :interfaces, :fields, :methods, :attributes
+      class << self
+        def of(class_file)
+          self.new.read(class_file)
+        end
+      end
 
-      def initialize(class_file)
+      def read(class_file)
+        class_node = ClassNode.new
         open class_file, 'rb' do|io|
           magic = io.read(4).unpack('N')[0]
           if magic == 0xCAFEBABE
-            @version = io.read(4).unpack('nn').reverse.join('.')
+            class_node.version = io.read(4).unpack('nn').reverse.join('.')
             pull_cp_info(io)
-            self.access_flags, this_class, super_class, interfaces_count = io.read(8).unpack('n*')
-            @interfaces = interfaces_count > 0 ? io.read(2 * interfaces_count).unpack('n*').map{|item| constant_pool[item].val} : []
-            self.name, @super_class = constant_pool[this_class].val, constant_pool[super_class].val
+            class_node.access_flags, this_class, super_class, interfaces_count = io.read(8).unpack('n*')
+            class_node.interfaces = interfaces_count > 0 ? io.read(2 * interfaces_count).unpack('n*').map{|item| constant_pool[item].val} : []
+            class_node.name, class_node.super_name = constant_pool[this_class].val, constant_pool[super_class].val
 
-            @fields = pull_list(io, FieldInfo)
-            @methods = pull_list(io, MethodInfo)
-            @attributes = pull_attributes(io)
+            class_node.field_nodes.concat pull_list(io, FieldNode)
+            class_node.method_nodes.concat pull_list(io, MethodNode)
+            class_node.attributes.concat pull_attributes(io)
           else
             raise "magic #{magic} is not valid java class file."
           end
         end
+        class_node
       end
 
       def to_s
@@ -115,8 +124,8 @@ module Rasm
             fields_count.times do
               access_flags, name_index, descriptor_index = io.read(6).unpack('n*')
               attributes = pull_attributes(io)
-              item = type.new(constant_pool[descriptor_index].val, attributes)
-              item.access_flags, item.name = access_flags, constant_pool[name_index].val
+              item = type.new(constant_pool[name_index].val, constant_pool[descriptor_index].val, attributes)
+              item.access_flags = access_flags
               items << item
             end
           end

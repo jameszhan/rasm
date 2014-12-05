@@ -24,34 +24,6 @@ module Rasm
       ACC_DEPRECATED = 0x20000; # class, field, method
 
 
-      TYPES = {
-        Z: 'boolean',
-        B: 'byte',
-        C: 'char',
-        S: 'short',
-        I: 'int',
-        F: 'float',
-        J: 'long',
-        D: 'double',
-        L: lambda{|ref| "#{ref}"},
-        '['.to_sym => lambda{|type| "#{type}[]"}
-      }
-
-      TYPEPATTERN = /^([ZBCSIFJDL\[])([^;<]*(<[^>]+>)?);?$/
-
-      def typeof(decriptor)
-        if m = TYPEPATTERN.match(decriptor)
-          type = TYPES[m[1].to_sym]
-          if type.respond_to? :call
-            type.call(typeof(m[2]))
-          else
-            type
-          end
-        else
-          decriptor
-        end
-      end
-
       def access_desc
         access = access_flags & ~ ACC_SUPER
         str = ''
@@ -70,7 +42,7 @@ module Rasm
         str
       end
 
-      attr_accessor :name, :access_flags
+      attr_accessor :access_flags
 
     end
 
