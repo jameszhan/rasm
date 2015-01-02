@@ -5,6 +5,7 @@ require 'rasm/java/attribute'
 require 'rasm/java/class_node'
 require 'rasm/java/field_node'
 require 'rasm/java/method_node'
+require 'rasm/java/annotation_node'
 
 module Rasm
   module Java

@@ -22,6 +22,7 @@ module Rasm
       ACC_ENUM = 0x4000; # class(?) field inner
 
       ACC_DEPRECATED = 0x20000; # class, field, method
+      ACC_SYNTHETIC_ATTRIBUTE = 0x40000
 
 
       def access_desc

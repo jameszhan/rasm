@@ -27,7 +27,7 @@ module Rasm
       end
 
       def typeof(descriptor)
-        parse_type(StringScanner.new(descriptor), 0)
+        parse_type(StringScanner.new(descriptor), 0) if descriptor
       end
 
       private
