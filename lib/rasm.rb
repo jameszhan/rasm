@@ -1,7 +1,6 @@
 require 'rasm/version'
 require 'rasm/core_ext'
 
-
 module Rasm
   autoload :Ref, 'rasm/ref'
 

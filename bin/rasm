@@ -1,0 +1,22 @@
+#!/usr/bin/env ruby
+
+require "bundler/setup"
+require 'thor'
+require 'rasm'
+
+class Cli < Thor
+
+  desc 'java --output=<target_path> <class_file>', 'execute subcmd'
+  options output: :string
+  def java(class_file)
+    class_node = Rasm::Java::Bytecode.of class_file, verbose: true
+    if options[:output]
+
+    else
+      puts class_node.textify
+    end
+  end
+
+end
+
+Cli.start(ARGV)
