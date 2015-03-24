@@ -55,6 +55,71 @@ module Rasm
         end
       end
 
+      def accept(&block) # vistor pattern
+        self.sync
+        block.call(version, :version)
+        block.call(access_flags, :access_flags)
+        block.call(signature, :signature)
+        block.call(access_desc, :access_desc)
+        block.call(name, :name)
+        block.call(super_name, :super_name) if super_name && super_name != 'java/lang/Object'
+        block.call(interfaces, :interfaces) unless interfaces.empty?
+        block.call(source_file, :source_file) if source_file
+        block.call(source_debug, :source_debug) if source_debug
+
+        visible_annotations.each do|ann|
+          ann.accept(&block)
+        end
+
+        invisible_annotations.each do|ann|
+          ann.accept(&block)
+        end
+
+        field_nodes.each do|f|
+          f.accept(&block)
+        end
+
+        method_nodes.each do|m|
+          m.accept(&block)
+        end
+
+        block.call(inner_classes, :inner_classes) unless inner_classes.empty?
+      end
+
+      def source
+        str = ''
+        self.accept do|value, type|
+            case type
+              when :version
+                str << "// version #{version}\n"
+              when :access_flags
+                access = access_flags
+                if access & ACC_DEPRECATED != 0
+                  str << "// DEPRECATED\n"
+                end
+                str << "// access flags 0x%x\n" % access
+              when :signature
+                str << "// signature: #{signature}\n" if signature
+              when :access_desc
+                str << access_desc
+              when :name
+                str << name
+              when :super_name
+                str << " extends #{super_name} "
+              when :interfaces
+                str << ' implements %s {' % interfaces.join(',')
+              when :source_file
+                str << "\n\t// compiled from: #{source_file}\n"
+              when :source_debug
+                str << "\n\t// debug info: #{source_debug}\n"
+              else
+                puts "Ignore #{type}: #{value}"
+            end
+        end
+        str << "\n}"
+        str
+      end
+
       def textify
         self.sync
         str = "// version #{version}\n"

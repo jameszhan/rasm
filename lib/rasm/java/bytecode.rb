@@ -111,7 +111,6 @@ module Rasm
           attributes_count.times do
             attribute_name_index, attribute_length = io.read(6).unpack('nN')
             name = constant_pool[attribute_name_index].val
-            puts "#{name} => #{attribute_length}"
             attributes << Attribute.of(constant_pool, name, io.read(attribute_length))
           end
           attributes

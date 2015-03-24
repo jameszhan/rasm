@@ -39,6 +39,10 @@ module Rasm
         end
       end
 
+      def accept(&block)
+
+      end
+
       def textify
         self.sync
         access = access_flags

@@ -9,11 +9,11 @@ class Cli < Thor
   desc 'java --output=<target_path> <class_file>', 'execute subcmd'
   options output: :string
   def java(class_file)
-    class_node = Rasm::Java::Bytecode.of class_file, verbose: true
+    class_node = Rasm::Java::Bytecode.of class_file, verbose: false
     if options[:output]
 
     else
-      puts class_node.textify
+      puts class_node.source
     end
   end
 

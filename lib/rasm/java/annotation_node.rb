@@ -17,6 +17,10 @@ module Rasm
         rule ? rule.call(value) : value
       end
 
+      def accept(&block)
+
+      end
+
       def textify
         "@#{@desc}(#{values.map do|k, v|
           str = "#{k}="

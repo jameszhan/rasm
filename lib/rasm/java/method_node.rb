@@ -70,6 +70,9 @@ module Rasm
         end
       end
 
+      def accept(&block)
+
+      end
 
       def textify
         self.sync
