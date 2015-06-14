@@ -2,8 +2,8 @@ describe Rasm do
 
   describe 'Bytecode' do
     it 'it can analyze java class bytecode' do
-      root_dir = '/u/workdir/codes/rfsc/codegen/target/test-classes'
-      clazz = 'com.mulberry.athena.asm.DemoClass'
+      root_dir = '/u/rebirth/perfect/underlying/target/test-classes'
+      clazz = 'me.jameszhan.underlying.compiler.HackingGeneric$C'
 
 
       class_file = "#{root_dir}/#{clazz.gsub('.', '/')}.class"
